@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>GAMESHOP - Catálogo</title>
+    <style>
+        body { background: #000; color: #fff; font-family: Arial, sans-serif; margin: 0; padding: 20px; text-align: center; }
+        
+        header { border-bottom: 2px solid #003791; padding-bottom: 20px; margin-bottom: 20px; }
+        .logo { max-height: 80px; }
+        
+        /* Cuadrícula simple */
+        .contenedor { 
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; 
+        }
+
+        .tarjeta { 
+            background: #111; border: 1px solid #333; width: 170px; 
+            border-radius: 8px; overflow: hidden; cursor: pointer;
+        }
+
+        /* Centrado de imagen garantizado */
+        .caja-foto { 
+            width: 170px; height: 220px; background: #222; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        .caja-foto img { 
+            width: 100%; height: 100%; object-fit: cover; /* Esto centra y ajusta */
+        }
+
+        .titulo { padding: 10px; font-size: 13px; font-weight: bold; }
+
+        /* Ventana de información */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; align-items: center; justify-content: center; }
+        .modal-contenido { background: #1a1a1a; padding: 20px; border: 2px solid #003791; width: 300px; text-align: left; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <img src="image_a2b563.png" alt="GAMESHOP" class="logo">
+    <br><br>
+    <input type="text" id="motor-busqueda" placeholder="Buscar juego..." onkeyup="buscar()" style="padding:10px; width:80%; border-radius:20px;">
+</header>
+
+<div class="contenedor" id="lista-juegos">
+    </div>
+
+<div id="miModal" class="modal" onclick="this.style.display='none'">
+    <div class="modal-contenido" onclick="event.stopPropagation()">
+        <h2 id="txt-titulo" style="color:#003791; margin-top:0;"></h2>
+        <p><b>Año:</b> <span id="txt-anio"></span></p>
+        <p><b>Peso:</b> <span id="txt-peso"></span></p>
+        <p><b>Info:</b> <span id="txt-info"></span></p>
+        <button onclick="document.getElementById('miModal').style.display='none'" style="width:100%; padding:10px; background:#003791; color:#fff; border:none; cursor:pointer;">CERRAR</button>
+    </div>
+</div>
+
+<script>
+    const inventario = [
+        { t: "God of War Ragnarok", a: 2022, p: "84GB", i: "gow-ragnarok.jpg", d: "El fin de la saga nórdica." },
+        { t: "Spider-Man", a: 2018, p: "45GB", i: "spiderman.jpg", d: "Acción en Nueva York." },
+        { t: "Crash Bandicoot Trilogy", a: 2017, p: "23GB", i: "crash-trilogy.jpg", d: "3 clásicos en HD." },
+		{ t: "Grand Theft Auto 5", a: 2013, p: "50GB", i: "gta-5.jpg", d: "Crimen en Los Santos." },
+		{ t: "FC 25", a: 2024, p: "50GB", d: "Fútbol actualizado.", i: "fc25.jpg" },
+	    { t: "ARK: Survival Evolved", a: 2017, p: "80GB", d: "Dinosaurios y supervivencia en una isla.", i: "ark.jpg" },
+		{ t: "Assassin's Creed Odyssey", a: 2018, p: "65GB", d: " RPG de acción en la Grecia antigua.", i: "ac-odyssey.jpg" },
+		{ t: "COD: Black Ops 3", a: 2015, p: "60GB", d: "Guerra futurista y modo Zombies.", i: "cod-bo3.jpg" },
+		{ t: "Bloody Roar 2", a: 1999, p: "450MB", d: "Lucha con transformaciones animales.", i: "bloody-roar.jpg" },
+		{ t: "Crash Nitro Fueled", a: 2019, p: "15GB", d: "Carreras de karts legendarias.", i: "crash-kart.jpg" },
+		{ t: "Sonic Colors Ultimate", a: 2021, p: "12GB", d: "Aventura de alta velocidad intergaláctica.", i: "sonic.jpg" },
+		{ t: "God of War (2018)", a: 2018, p: "45GB", d: "Kratos en tierras nórdicas.", i: "gow-2018.jpg" },
+		{ t: "Brawlhalla", a: 2017, p: "800MB", d: "Lucha de plataformas.", i: "brawlhalla.jpg" },
+        { t: "Naruto Storm 4", a: 2016, p: "38GB", d: "Batallas ninja finales.", i: "naruto-4.jpg" },
+        { t: "Dragon Ball FighterZ", a: 2018, p: "7GB", d: "Lucha 2D frenética.", i: "db-fighterz.jpg" },
+        { t: "The Last of Us Part II", a: 2020, p: "78GB", d: "Supervivencia brutal.", i: "tlou2.jpg" },
+        { t: "Tomb Raider", a: 2013, p: "15GB", d: "Origen de Lara Croft.", i: "tomb-raider.jpg" },
+        { t: "Jump Force", a: 2019, p: "22GB", d: "Héroes de anime unidos.", i: "jump-force.jpg" },
+        { t: "Little Nightmares 2", a: 2021, p: "6GB", d: "Terror y puzles.", i: "little-nightmares-2.jpg" },
+        { t: "Dragon Ball Kakarot", a: 2020, p: "35GB", d: "La vida de Goku en RPG.", i: "db-kakarot.jpg" },
+        { t: "COD: Cold War", a: 2020, p: "130GB", d: "Espionaje Guerra Fría.", i: "cod-coldwar.jpg" },
+        { t: "Cuphead", a: 2019, p: "4GB", d: "Arte retro y dificultad.", i: "cuphead.jpg" },
+        { t: "Street Fighter 6", a: 2023, p: "55GB", d: "Nueva era de pelea.", i: "sf6.jpg" },
+        { t: "Dreamworks Kart Racing", a: 2023, p: "10GB", d: "Carreras con Shrek.", i: "dreamworks.jpg" },
+        { t: "FC 26", a: 2025, p: "55GB", d: "Simulador fútbol 2026.", i: "fc26.jpg" },
+        { t: "Hollow Knight Silksong", a: 2025, p: "8GB", d: "La esperada secuela.", i: "silksong.jpg" },
+        { t: "It Takes Two", a: 2021, p: "40GB", d: "Cooperación pura.", i: "it-takes-two.jpg" },
+        { t: "Mortal Kombat 11", a: 2019, p: "43GB", d: "Peleas sangrientas.", i: "mk11.jpg" },
+        { t: "Knack 2", a: 2017, p: "38GB", d: "Plataformas familiar.", i: "knack2.jpg" },
+        { t: "MXGP", a: 2014, p: "12GB", d: "Motocross oficial.", i: "mxgp.jpg" },
+        { t: "Nidhogg", a: 2014, p: "150MB", d: "Duelo de esgrima.", i: "nidhogg.jpg" },
+        { t: "eFootball PES 2021", a: 2020, p: "35GB", d: "Fútbol táctico.", i: "pes2021.jpg" },
+        { t: "Rayman Legends", a: 2014, p: "9GB", d: "Plataformas rítmico.", i: "rayman.jpg" },
+        { t: "Sekiro", a: 2019, p: "13GB", d: "Samuráis y precisión.", i: "sekiro.jpg" },
+        { t: "Resident Evil 4 Remake", a: 2023, p: "58GB", d: "Terror en España.", i: "re4.jpg" },
+        { t: "KOF XV", a: 2022, p: "32GB", d: "Lucha clásica por equipos.", i: "kof15.jpg" },
+        { t: "Uncharted 4", a: 2016, p: "63GB", d: "Tesoro pirata.", i: "uncharted4.jpg" },
+        { t: "TMNT: Shredder's Revenge", a: 2022, p: "8GB", d: "Las tortugas ninja como nunca las habias visto antes.", i: "tmnt.jpg" },
+        { t: "Streets of Rage 4", a: 2020, p: "5GB", d: "Peleas callejeras.", i: "sor4.jpg" },
+        { t: "Emulador Nintendo", a: "2021", p: "5GB", d: "Clásicos retro.", i: "nintendo.jpg" },
+		{ t: "WWE 2K19", a: "2018", p: "20GB", d: "Lucha libre para todos.", i: "wwe-2k19.jpg" },
+		{ t: "Red Dead Redemption", a: "2010", p: "15GB", d: "Vaqueros, armas, traicion, y zombies.", i: "rdr1.jpg" },
+		{ t: "Tekken 7", a: "2017", p: "50GB", d: "Lucha frenetica.", i: "tekken7.jpg" },
+		{ t: "Days Gone", a: "2019", p: "70GB", d: "Apocalipsis Zombie, Y Motos ¡Que mas se puede pedir?.", i: "days-gone.jpg" },
+		{ t: "FC 27", a: "2026", p: "50GB", d: "La nueva era del futbol.", i: "fc27.jpg" },
+		{ t: "God Of War", a: "2015", p: "40GB", d: "El Remake mas esperado.", i: "gow3.jpg" },
+		{ t: "Monopoly Party", a: "2002", p: "10GB", d: "Compite con tu familia.", i: "monoparty.jpg" },
+		{ t: "Assassin's Creed Origins", a: 2017, p: "60GB", d: " RPG de acción en el egipto antiguo.", i: "origins.jpg" },
+        { t: "Assassin's Creed Mirage", a: 2023, p: "60GB", d: " RPG de acción en el Irak antiguo.", i: "mirage.jpg" },		
+		{ t: "Assassin's Creed IV Black Flag", a: 2013, p: "25GB", d: " RPG de acción inspirado en la gran epoca de los piratas.", i: "black-flag.jpg" },
+		        { t: "Contra Operacion Galuga", a: 2024, p: "8GB", d: "Los clasicos siempre vuelven.", i: "galuga.jpg" },
+		         { t: "Crash Bandicoot 4", a: 2020, p: "45GB", d: "Crash regreso con mas aventuras en su cuarta entrega.", i: "crash4.jpg" },
+		        { t: "Watch Dogs 2", a: 2016, p: "28GB", d: "Hackers en un mundo abierto.", i: "wd2.jpg" },
+				        { t: "Metro Exodus", a: 2019, p: "50GB", d: "Rusia apocaliptica y supervivencia .", i: "metro.jpg" },
+						        { t: "Hogwarts Legacy", a: 2023, p: "85GB", d: "La magia mas cerca que nunca antes", i: "legacy.jpg" },
+								        { t: "Gran Turismo 7", a: 2022, p: "110GB", d: "El mejor simulador de conduccion.", i: "granturismo7.jpg" },
+										        { t: "Ghost Of Tsushima", a: 2020, p: "60GB", d: "Samurais locos por la gloria.", i: "ghost.jpg" },
+												        { t: "Hollow Knight", a: 2018, p: "10GB", d: "El plataformero que lo cambio todo.", i: "hk.jpg" },
+														        { t: "Call Of Duty 4 Modern Warfare Remastered" , a: 2016, p: "75GB", d: "Un clasico resucitado.", i: "codmw4.jpg" },
+																        { t: "Fifa 23", a: 2022, p: "50GB", d: "Dinamicas nuevas, mundial, y mucho por descubrir .", i: "fifa23.jpg" },
+																		        { t: "F1 24", a: 2024, p: "65GB", d: "Carreras freneticas por la victoria.", i: "f124.jpg" },
+																				
+		
+        // Puedes seguir agregando aquí...
+    ];
+
+    function mostrar(datos) {
+        const caja = document.getElementById('lista-juegos');
+        caja.innerHTML = '';
+        datos.forEach(j => {
+            const div = document.createElement('div');
+            div.className = 'tarjeta';
+            div.onclick = () => {
+                document.getElementById('txt-titulo').innerText = j.t;
+                document.getElementById('txt-anio').innerText = j.a;
+                document.getElementById('txt-peso').innerText = j.p;
+                document.getElementById('txt-info').innerText = j.d;
+                document.getElementById('miModal').style.display = 'flex';
+            };
+            div.innerHTML = `
+                <div class="caja-foto">
+                    <img src="fotos/${j.i}" onerror="this.parentElement.innerHTML='<small>Falta fotos/${j.i}</small>'">
+                </div>
+                <div class="titulo">${j.t}</div>
+            `;
+            caja.appendChild(div);
+        });
+    }
+
+    function buscar() {
+        const texto = document.getElementById('motor-busqueda').value.toLowerCase();
+        const filtrados = inventario.filter(j => j.t.toLowerCase().includes(texto));
+        mostrar(filtrados);
+    }
+
+    // Arrancar
+    mostrar(inventario);
+</script>
+</body>
+</html>
